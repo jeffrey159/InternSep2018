@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Visual Progger</title>
+    <link rel="stylesheet" href="/css/styles.css">
+</head>
+
+<body>
+    <div class="main-header">
+        <span class="logo">
+            <img src="/img/logo.png" alt="">
+        </span>
+        <span class="title">
+            <img src="/img/title.png">
+        </span>
+    </div>
+    <div>
+        <div id="D3Diagram"></div>
+    </div>
+
+
+    <div class="footer-logo" id="logo">
+        <img src="/img/crow-logo.png">
+    </div>
+
+
+    <div class="selection-cont">
+        <p>Visualization Style</p>
+        <select id="ddlViewBy">
+            <option value="hierarchical" selected="selected">hierarchical</option>
+            <option value="radial">radial</option>
+        </select>
+        <!-- 
+  <p>Computers</p>
+        <select id="selection">
+        </select>
+
+
+
+        <br>
+        Decay: <input type="checkbox" id="decayCheck">
+      
+        <br>
+        Delete: <input type="checkbox" id="deleteCheck">
+  -->
+    </div>
+    <div class="legend">
+        <p>MAC Address > UserId > Process > File Opened</p>
+        <p style="color: red">Red = File Closed</p>
+    </div>
+
+
+    <!-- Bootstrap core JavaScript-->
+    <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
+
+    <!-- Core plugin JavaScript-->
+    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+
+    <!-- Page level plugin JavaScript-->
+    <script src="/bundleee.js"></script>
+</body>
+
+</html>

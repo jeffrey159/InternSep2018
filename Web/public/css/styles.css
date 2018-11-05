@@ -1,0 +1,108 @@
+html, body
+{
+    background-color: black;
+    margin: 0 !important;
+}
+.node {
+    cursor: pointer;
+}
+
+.node circle {
+    fill: #fff;
+    stroke-width: 1.5px;
+}
+
+.node text {
+    font: 10px sans-serif;
+    fill: white;
+}
+
+.link {
+    fill: none;
+    stroke: rgba(255,255,255,0.6);
+    stroke-width: 1.5px;
+}
+
+.main-header {
+    height: 60px;
+    z-index: 1;
+    width: 100%;
+    padding: 5px 0px;
+    border-bottom: 1px rgba(255, 255, 255, 0.5) solid;
+    background-color: rgba(0, 0, 0, 0.5);
+    position: absolute;
+}
+
+
+#logo {
+    -webkit-animation: rotation 6s infinite linear;
+    position:absolute;
+    z-index: 5000;
+    bottom:3em;
+    right:5em;
+}
+
+#logo img{
+  width:10em;
+  height:5em;
+}
+
+
+.date {
+    font-family: Nobel-Light;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 10px;
+}
+
+.time {
+    font-family: Nobel-Light;
+    color: #ffffff;
+    text-transform: uppercase;
+    letter-spacing: 10px;
+}
+
+.logo img{
+    width: 250px;
+    margin-right: 5px;
+}
+
+.title img {
+    display: block;
+    width: 200px;
+    margin: -40px auto;
+}
+
+@-webkit-keyframes rotation {
+    from {-webkit-transform: rotateY(0deg);}
+    to   {-webkit-transform: rotateY(359deg);}
+}
+
+.selection-cont
+{
+    position: absolute;
+    bottom: 4em;
+    left: 5em;
+    color: white;
+    font-family: 'Open Sans', sans-serif;
+}
+#selection
+{
+    color: white;
+    background-color: black;
+}
+.selection-cont p{
+    margin-bottom: 0px;
+}
+.legend
+{
+    position: absolute;
+    bottom: 4em;
+    left: 20em;
+    color: white;
+    font-family: 'Open Sans', sans-serif;
+
+}
+.legend p {
+        margin: 5px;
+}

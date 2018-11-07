@@ -17,8 +17,9 @@ var x = null;
 var LOG_GETProcess_DB = 0;
 var LOG_GETHEADER_DB = 0;
 
+
 const db = new arangojs.Database({
-    url: "http://192.168.133.153:8529"
+    url: "http://192.168.133.147:8529"
 });
 db.useDatabase('visualprogger');
 db.useBasicAuth("root", "1234");
@@ -42,7 +43,7 @@ let dbName = "dbBuffer";
 //'FOR d IN live FILTER d.id == @fileId and d.typeName == "PSCT_FILE_OPEN" and d.timestamp > DATE_FORMAT(DATE_ADD(DATE_NOW(),"PT12H58M"), "%yyyy-%mm-%dd %hh:%ii:%ss") COLLECT fileName = d.fileName, fileId= d.fileId RETURN { fileName,fileId }',
 
 //ProcessTree.html
-//SkipList Indexing query speed improved 2ms
+//SkipList Indexing query speed improved to 2ms
 app.get('/getProcesses', function (req, res) {
 
 
@@ -109,6 +110,27 @@ app.get('/QueryFileName', function (req, res) {
         });
     }
 });
+app.get('/VizQuery', function (req, res) {
+    var timestamp = moment().subtract(5, "second").format('YYYY-MM-DD HH:mm:ss');
+
+    db.query({
+        query: 'FOR d IN live FILTER d.typeName == "PSCT_FILE_OPEN"  d.timestamp > @time RETURN d',
+        bindVars: {
+            time: timestamp
+        }
+    }).then(
+        cursor => cursor.all()
+    ).then(
+        result => {
+          
+            res.send(result);
+        },
+        err => console.log('Failed to execute query:', err)
+    );
+
+});
+
+
 
 //Display 7 days chart of daily logs received
 app.get('/ChartDataQuery', function (req, res) {
@@ -162,7 +184,7 @@ io.on('connection', (socket) => {
         db.query(
             'RETURN LENGTH(live)'
         ).then(function (cursor) {
-            if (LOG_GETHEADER_DB == 0) {
+            if (LOG_GETHEADER_DB == 1) {
                 console.log("----------------------------------------------------\nTotalLogs: Retrieving Data for Index.html")
                 var elapsed = (new Date() - start) / 1000;
                 console.log("Time Elapsed: " + elapsed + "s");
@@ -284,14 +306,15 @@ app.get('/files', function (req, res) {
         }).then(function (list) {
             var testData = [];
             list.forEach(function (lists) {
+                console.log(lists);
                 try {
                     var isDirectory = lists.type;
                     if (isDirectory == 'd') {
                         testData.push({
                             Name: lists.name,
                             IsDirectory: true,
-                            Path: path.join(query, lists.name),
-                            permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
+                            Path: path.join(query, lists.name)
+                            //,                            permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
                         });
                     } else {
                         var ext = path.extname(lists.name);
@@ -307,8 +330,8 @@ app.get('/files', function (req, res) {
                             Ext: ext,
                             IsDirectory: false,
                             Path: path.join(query, lists.name),
-                            Size: bytesToSize(lists.size),
-                            permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
+                            Size: bytesToSize(lists.size)
+                            //,                            permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
                         });
                     }
                 } catch (e) {

@@ -1,9 +1,19 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <title>Visual Progger</title>
-    <link rel="stylesheet" href="/css/styles.css">
+
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
+    <link href="/css/styles.css" rel="stylesheet">
+
+    <link href="vendor/bootstrap/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet">
+    <!-- Bootstrap core CSS-->
+    <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom fonts for this template-->
+    <link href="vendor/fontawesome-free/css/all.css" rel="stylesheet">
 </head>
 
 <body>
@@ -15,23 +25,31 @@
             <img src="/img/title.png">
         </span>
     </div>
+
     <div>
         <div id="D3Diagram"></div>
     </div>
 
-
-    <div class="footer-logo" id="logo">
-        <img src="/img/crow-logo.png">
-    </div>
-
-
     <div class="selection-cont">
+            <input type="button" id="pauseViz" value="Pause" >
+        <p>Past Visualization</p>
+        <p>Select Date and Time</p>
+        <div class="form-group">
+            <div class="input-group date" id="datetimepicker1" data-target-input="nearest">
+                <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker1"/>
+                <div class="input-group-append" data-target="#datetimepicker1" data-toggle="datetimepicker">
+                    <div class="input-group-text"><i class="fa fa-calendar"></i></div>
+                </div>
+            </div>
+        </div>
         <p>Visualization Style</p>
         <select id="ddlViewBy">
             <option value="hierarchical" selected="selected">hierarchical</option>
             <option value="radial">radial</option>
         </select>
-        <!-- 
+        <br>
+
+        <!--  
   <p>Computers</p>
         <select id="selection">
         </select>
@@ -51,14 +69,21 @@
     </div>
 
 
+
+    <div class="footer-logo" id="logo">
+        <img src="/img/crow-logo.png">
+    </div>
+
+
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
-    <!-- Core plugin JavaScript-->
-    <script src="vendor/jquery-easing/jquery.easing.min.js"></script>
+    <!-- Page level plugin JavaScript -->
+    <script src="vendor/bootstrap/moment.min.js"></script>
+    <script src="vendor/bootstrap/js/tempusdominus-bootstrap-4.min.js"></script>
 
-    <!-- Page level plugin JavaScript-->
+    <!-- Custom scripts for all pages-->
     <script src="/bundleee.js"></script>
 </body>
 

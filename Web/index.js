@@ -275,12 +275,28 @@ $(document).ready(function () {
 
     //if location is Visualization page
     if (location.href.match('http://127.0.0.1:3000/VisualProgger.html') != null) {
+        (function ($) { 
 
+            $('#datetimepicker1').datetimepicker({
+                format: 'LLL LTS',
+                format: "YYYY-MM-DD HH:mm:ss",
+                maxDate: moment().format('YYYY-MM-DD')
+            });
+
+            $("#pauseViz").bind("click", function (e) {
+              clearInterval(handler);
+              console.log("Pause Visualization");
+              $('#datetimepicker1').on("change.datetimepicker", function (e) {
+                console.log(moment(e.date).format('YYYY-MM-DD HH:mm:ss'));
+            });
+            });
+         
+        })(jQuery);
         //Retreive ComputerID after selecting ID from table in index.html
         let urlParams = new URLSearchParams(window.location.search);
         let myParam = urlParams.get('id');
         selected = myParam;
-        setInterval(() => {
+       var handler = setInterval(() => {
             socket.emit("get");
         }, 5000);
 
@@ -547,8 +563,8 @@ document.addEventListener("DOMContentLoaded", function () {
 
     //D3 Framework select Div ID and append SVG 
     svg = d3.select("#D3Diagram").append("svg")
-        .attr("width", 1500)
-        .attr("height", 1500)
+        .attr("width", width)
+        .attr("height", height)
         .attr("margin", "0 auto")
         .call(d3.behavior.zoom().on("zoom", function () {
             svg.attr("transform", "translate(" + require("d3").event.translate + ")" + " scale(" + require("d3").event.scale + ")")
@@ -574,26 +590,6 @@ window.CloseFTPIP = function (e) {
     socket.emit('closeconnection', true);
 }
 
-//Refresh Index.html Table
-window.refreshTable = function () {
-    /*
-    var count = 0;
-    var table = $('#dataTable').DataTable();
-    table.clear();
-    console.log("Button Clicked");
-    socket.emit("get");
-    socket.on("get", (data) => {
-        for (let i = 0; i < data.length; i++) {
-            if (!selection[data[i].id]) {
-                count += 1;
-                selection[data[i].id] = data[i].id;
-                table.row.add(['<a href="test.html?id=' + data[i].id + '">' + convertIntToMac(data[i].id) + '</a>', data[i].timestamp, 'Hamilton, New Zealand']).draw();
-                document.getElementById("DivLiveComp").innerHTML = count + " Live Computers";
-            }
-        }
-    });
-    */
-}
 //Remove value not displayed in visualization
 function decay() {
     if (Math.floor(store.length * 0.05) !== 0) {

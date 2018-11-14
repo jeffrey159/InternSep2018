@@ -5,13 +5,13 @@
     <meta charset="UTF-8">
     <title>Visual Progger</title>
 
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans" rel="stylesheet">
     <link href="/css/styles.css" rel="stylesheet">
-
-    <link href="vendor/bootstrap/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet">
     <!-- Bootstrap core CSS-->
     <link href="vendor/bootstrap/css/bootstrap.min.css" rel="stylesheet">
-
+    <!-- Custom CSS for this template-->
+    <link href="vendor/bootstrap/css/bootstrap-toggle.min.css" rel="stylesheet">
+    <link href="vendor/bootstrap/css/tempusdominus-bootstrap-4.min.css" rel="stylesheet">
+   
     <!-- Custom fonts for this template-->
     <link href="vendor/fontawesome-free/css/all.css" rel="stylesheet">
 </head>
@@ -31,17 +31,21 @@
     </div>
 
     <div class="selection-cont">
-            <input type="button" id="pauseViz" value="Pause" >
+        <p>Live Visualization</p>
+        <input type="checkbox" checked id="toggle-event" data-toggle="toggle" data-on="Live" data-off="Off"
+            data-onstyle="success" data-offstyle="danger">
+        <br>
         <p>Past Visualization</p>
-        <p>Select Date and Time</p>
-        <div class="form-group">
+        <p data-toggle="tooltip" data-placement="right" title="Queries for data within 1 minute time frame of selected Date/Time">Select Date</p>
             <div class="input-group date" id="datetimepicker1" data-target-input="nearest">
-                <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker1"/>
+                <input type="text" class="form-control datetimepicker-input" data-target="#datetimepicker1" />
                 <div class="input-group-append" data-target="#datetimepicker1" data-toggle="datetimepicker">
                     <div class="input-group-text"><i class="fa fa-calendar"></i></div>
                 </div>
             </div>
-        </div>
+
+        <input type="button" id="pauseViz" value="Query Date">
+        
         <p>Visualization Style</p>
         <select id="ddlViewBy">
             <option value="hierarchical" selected="selected">hierarchical</option>
@@ -53,9 +57,6 @@
   <p>Computers</p>
         <select id="selection">
         </select>
-
-
-
         <br>
         Decay: <input type="checkbox" id="decayCheck">
       
@@ -64,11 +65,10 @@
   -->
     </div>
     <div class="legend">
+        <p id="test"></p>
         <p>MAC Address > UserId > Process > File Opened</p>
         <p style="color: red">Red = File Closed</p>
     </div>
-
-
 
     <div class="footer-logo" id="logo">
         <img src="/img/crow-logo.png">
@@ -77,6 +77,7 @@
 
     <!-- Bootstrap core JavaScript-->
     <script src="vendor/jquery/jquery.min.js"></script>
+    <script src="vendor/bootstrap/js/bootstrap-toggle.min.js"></script>
     <script src="vendor/bootstrap/js/bootstrap.bundle.min.js"></script>
 
     <!-- Page level plugin JavaScript -->

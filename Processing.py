@@ -9,7 +9,7 @@ from struct import unpack
 from threading import Thread
 from arango import ArangoClient
 # Initialize the client for ArangoDB.
-client = ArangoClient(protocol='http', host='192.168.133.147', port=8529)
+client = ArangoClient(protocol='http', host='192.168.133.154', port=8529)
 
 # temp config
 redis_Stream = "testingList"

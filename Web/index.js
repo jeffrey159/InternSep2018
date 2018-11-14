@@ -26,7 +26,7 @@ let deleted = {};
 
 $(document).ready(function () {
     //if location is ProcessTree
-    if (location.href.match('http://127.0.0.1:3000/ProcessTree.html') != null) {
+    if (location.href.match(':3000/ProcessTree.html') != null) {
         //Jquery Function that displays list of File path that has been opened in past 1 minutes by retrieving it from ArangoDB
         (function ($) {
             var options = {
@@ -82,7 +82,8 @@ $(document).ready(function () {
         })(jQuery);
     }
     //if location is Monitor.html
-    if (location.href.match('http://127.0.0.1:3000/Monitor.html') != null) {
+    if (location.href.match(':3000/Monitor.html') != null) {
+        //Jquery Function that query fileName and fileId to display all the past data
         (function ($) {
             var options = {
                 "bProcessing": true,
@@ -130,11 +131,11 @@ $(document).ready(function () {
                     }
                 }]
             };
-
+            //Retrieve value from the URL
             let urlParams = new URLSearchParams(window.location.search);
             let myParam = urlParams.get('id');
             var table = $(".MonitorTable").dataTable(options);
-
+            //Pass it to App.get method in app.js and return back data and add it into the table
             $.get('/QueryFileName/?path=' + myParam).then(function (data) {
                 table.fnClearTable();
                 table.fnAddData(data);
@@ -142,6 +143,7 @@ $(document).ready(function () {
 
             var intervalID = null;
             //if user toggle Live Visualization
+            //Queries the DB every 5 seconds and updates the table with the latest data
             function intervalManager(flag) {
                 if (flag)
                     intervalID = setInterval(() => {
@@ -153,7 +155,7 @@ $(document).ready(function () {
                 else
                     clearInterval(intervalID);
             }
-
+            //Jquery Toggle Event on Change. 
             $('#toggle-event').change(function () {
                 var isChecked = $(this).prop('checked');
                 intervalManager(isChecked);
@@ -165,40 +167,43 @@ $(document).ready(function () {
     //if location is Index.html
     if (document.location == "http://127.0.0.1:3000/") {
         var count = 0;
-
         var table = $('#dataTable').DataTable();
         setInterval(() => {
-            //emit the main socket in app.js
+            //emit the main socket in app.js every 5 seconds
             socket.emit("IndexPage");
         }, 5000);
 
-        socket.on("LogCount", (LogCount) => {
-            document.getElementById("divPackets").innerHTML = LogCount + " Logs/Min";
-        });
-
-        socket.on("TotalLogs", (TotalLogs) => {
-            document.getElementById("DivLogs").innerHTML = TotalLogs + " Total Logs";
-        });
+        //Method to get number of live machines
         socket.on("TableDatas", (data) => {
+            //get the length of redis log to count the number of live logs sending from redis to live visualization
             document.getElementById("divLiveLogs").innerHTML = data.length + " Live Logs";
             for (let i = 0; i < data.length; i++) {
+                //Ensure there's no duplicate id
                 if (!selection[data[i].id]) {
+                    //var count to display on card header "Live Machines"
                     count += 1;
                     selection[data[i].id] = data[i].id;
+                    //display it on "live machine" table with each column and hyperlink that redirects them to either visualization or process tree page
                     table.row.add(['<a href="VisualProgger.html?id=' + data[i].id + '">' + convertIntToMac(data[i].id) + '</a>', data[i].platform, data[i].timestamp, '<a href="ProcessTree.html?id=' + data[i].id + '"> Click Here</a>']).draw();
                     document.getElementById("DivLiveComp").innerHTML = count + " Live Machines";
                 }
             }
         });
+        //socket method to append text on card header of Logs/Min
+        socket.on("LogCount", (LogCount) => {
+            document.getElementById("divPackets").innerHTML = LogCount + " Logs/Min";
+        });
 
-        //socket.on("ChartData", (data) => { });
+        //socket method to append text on card header of Total Logs
+        socket.on("TotalLogs", (TotalLogs) => {
+            document.getElementById("DivLogs").innerHTML = TotalLogs + " Total Logs";
+        });
+        //Chart Query
         $.get('/ChartDataQuery').then(function (data) {
 
             var graphData = [];
             var labels = [];
             data.forEach(function (element) {
-                console.log(element.totalPackets);
-                console.log(element.date);
                 graphData.push(element.totalPackets);
                 labels.push(element.date);
             });
@@ -254,7 +259,7 @@ $(document).ready(function () {
                                     'quarter': 'MMM DD',
                                     'year': 'MMM DD',
                                 },
-                                min: moment().subtract(7, "day").format('YYYY-MM-DD'),
+                                min: moment().subtract(1, "week").format('YYYY-MM-DD'),
                                 max: moment().format('YYYY-MM-DD')
                             },
                             ticks: {
@@ -272,31 +277,81 @@ $(document).ready(function () {
             });
         });
     }
-
     //if location is Visualization page
-    if (location.href.match('http://127.0.0.1:3000/VisualProgger.html') != null) {
-        (function ($) { 
+    if (location.href.match(':3000/VisualProgger.html') != null) {
+        var handler = null;
 
+        (function ($) {
+            $('[data-toggle="tooltip"]').tooltip();
+
+            var handle = null;
             $('#datetimepicker1').datetimepicker({
                 format: 'LLL LTS',
                 format: "YYYY-MM-DD HH:mm:ss",
-                maxDate: moment().format('YYYY-MM-DD')
+                maxDate: moment().format('YYYY-MM-DD HH:mm:ss')
+            });
+
+            $('#datetimepicker1').on("change.datetimepicker", function (e) {
+                handle = moment(e.date).format('YYYY-MM-DD HH:mm:ss');
             });
 
             $("#pauseViz").bind("click", function (e) {
-              clearInterval(handler);
-              console.log("Pause Visualization");
-              $('#datetimepicker1').on("change.datetimepicker", function (e) {
-                console.log(moment(e.date).format('YYYY-MM-DD HH:mm:ss'));
+                clearInterval(handler);
+                $('#toggle-event').prop('checked', false).change();
+                console.log("Pause Visualization");
+                var test = encodeURIComponent(handle);
+
+                $.get('/VizQuery/?path=' + test).then(function (data) {
+                    //check if there's any query returned to be displayed
+                    if (data.length > 0){
+                        document.getElementById("test").innerHTML = "Data Retrieve Successfully" ;
+                        document.getElementById("test").style.color = "green";
+                        //empty exisiting array in order to store and display past visualization data
+                        store = [];
+                        deleteStore();
+                        store = store.concat(data);
+                        store = removeDuplicates(store);
+                        nested = nestTypeName(store);
+                        let curNest = getNestFromId(nested, "PSCT_FILE_OPEN");
+                        curNest = nest(curNest);
+                        for (let item of curNest) {
+                            //if computer ID is still same 
+                            if (item.key === selected) {
+                                draw(renameKeytoName(item));
+                            }
+                        }
+                    }else {
+                        document.getElementById("test").innerHTML = "No data found for this Date/Time" ;
+                        document.getElementById("test").style.color = "red";
+
+                    }
+                });
             });
+
+            var intervalID = null;
+            //if user toggle Live Visualization
+            //Queries the DB every 5 seconds and updates the table with the latest data
+            function intervalManager(flag) {
+                if (flag)
+                    intervalID = setInterval(() => {
+                        socket.emit("get");
+                    }, 5000);
+                else
+                    clearInterval(intervalID);
+            }
+            //Jquery Toggle Event on Change. 
+            $('#toggle-event').change(function () {
+                var isChecked = $(this).prop('checked');
+                intervalManager(isChecked);
             });
-         
         })(jQuery);
+
+
         //Retreive ComputerID after selecting ID from table in index.html
         let urlParams = new URLSearchParams(window.location.search);
         let myParam = urlParams.get('id');
         selected = myParam;
-       var handler = setInterval(() => {
+         handler = setInterval(() => {
             socket.emit("get");
         }, 5000);
 
@@ -323,8 +378,8 @@ $(document).ready(function () {
             }
         });
     }
-
-    if (document.location == "http://127.0.0.1:3000/fileManager.html") {
+    //FTP File Manager
+    if (location.href.match(':3000/fileManager.html') != null)  {
 
         socket.emit("FTPConnStatus");
         //Jquery Function for FTP Connection to Remote Client
@@ -453,7 +508,7 @@ $(document).ready(function () {
                 table.fnClearTable();
                 table.fnAddData(data);
             });
-
+            //Create Folder Icon Button
             $(".makeDir").bind("click", function (e) {
                 if (!currentPath) return;
                 var dir = prompt("Please enter Folder name", "");
@@ -463,7 +518,7 @@ $(document).ready(function () {
                     table.fnAddData(data);
                 });
             });
-
+            //Remove Folder Icon Button
             $(".RemoveDir").bind("click", function (e) {
                 if (!currentPath) return;
                 var rowData2 = table.fnGetData(".selected");
@@ -479,19 +534,7 @@ $(document).ready(function () {
                 }
 
             });
-            /*
-                        $(".UploadFile").bind("click", function (e) {
-                            if (!currentPath) return;
-                            document.getElementById('fileid').click();
-
-                            var testing = [currentPath, ""];
-                            $.get('/UploadFile?path=' + testing).then(function (data) {
-                                table.fnClearTable();
-                                table.fnAddData(data);
-                            });
-
-                        });*/
-
+            //up/previous Icon Button
             $(".up").bind("click", function (e) {
                 if (!currentPath) return;
                 var idx = currentPath.lastIndexOf("/");
@@ -505,7 +548,7 @@ $(document).ready(function () {
             });
         })(jQuery);
 
-
+        //Connection Status Label
         socket.on("FTPStatus", function (data) {
 
             document.getElementById("ConnectionStatus").innerHTML = "Connection Status: " + data;
@@ -527,17 +570,15 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("ddlViewBy").onchange = function () {
         if (document.getElementById("ddlViewBy").value == "radial") {
             console.log("radial view selected");
-            tree = d3.layout.tree()
-                //  .size([height, width])
-                .size([360, diameter / 2 - 80])
-                .separation(function (a, b) {
-                    return (a.parent === b.parent ? 1 : 10) / a.depth;
-                });
 
+            tree = d3.layout.tree()
+            .size([360, diameter / 2 - 80 ])
+            .separation(function(a, b) { return (a.parent === b.parent ? 1 : 10) / a.depth; });
+        
             diagonal = d3.svg.diagonal.radial()
-                .projection(function (d) {
-                    return [d.y, d.x / 180 * Math.PI];
-                });
+            .projection(function(d) { return [d.y, d.x / 180 * Math.PI]; });
+        
+          
         } else {
             //hierarchical View
             console.log("hierachical view selected");
@@ -549,13 +590,8 @@ document.addEventListener("DOMContentLoaded", function () {
         }
     }
 
-    tree = d3.layout.tree().nodeSize([20, 60]);
-    /*
-        .separation(function (a, b) {
-            return (a.parent === b.parent ? 3 : 1);
-        })
-        .size([height, width]); /*
-*/
+    tree = d3.layout.tree().nodeSize([10, 50]);
+
     diagonal = d3.svg.diagonal()
         .projection(function (d) {
             return [d.y, d.x];
@@ -870,11 +906,37 @@ function update(source) {
         })
         .on("click", click);
 
+    /*
     nodeEnter.append("circle")
         .attr("r", 1e-6)
         .style("fill", function (d) {
             return d._children ? "lightsteelblue" : "#fff";
-        });
+        });*/
+
+
+    node.append("image")
+        .attr("xlink:href", function (d) {
+
+            switch (d.depth) {
+                case 0:
+                    return "/img/monitor.png";
+                case 1:
+                    return "/img/user.png";
+                case 2:
+                    return "/img/process.png";
+                case 3:
+                    return "/img/folder.png";
+
+            }
+
+        })
+        .attr("x", -10)
+        .attr("y", -8)
+        .attr("width", 16)
+        .attr("height", 16);
+
+
+
     //Display Text of each node
     nodeEnter.append("text")
         .attr("x", 5)
@@ -886,6 +948,7 @@ function update(source) {
         })
         .style("fill-opacity", 1e-6)
         .style("fill", function (d) {
+
             if (d.depth === 3) {
                 if (deleted[selected].includes(d.children[0].fileId)) {
                     return "red";

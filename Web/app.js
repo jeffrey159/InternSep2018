@@ -19,7 +19,7 @@ var LOG_GETHEADER_DB = 0;
 
 
 const db = new arangojs.Database({
-    url: "http://192.168.133.147:8529"
+    url: "http://192.168.133.154:8529"
 });
 db.useDatabase('visualprogger');
 db.useBasicAuth("root", "1234");
@@ -43,7 +43,7 @@ let dbName = "dbBuffer";
 //'FOR d IN live FILTER d.id == @fileId and d.typeName == "PSCT_FILE_OPEN" and d.timestamp > DATE_FORMAT(DATE_ADD(DATE_NOW(),"PT12H58M"), "%yyyy-%mm-%dd %hh:%ii:%ss") COLLECT fileName = d.fileName, fileId= d.fileId RETURN { fileName,fileId }',
 
 //ProcessTree.html
-//SkipList Indexing query speed improved to 2ms
+//SkipList Indexing query speed improved to 0.657 ms - 4.632 ms
 app.get('/getProcesses', function (req, res) {
 
 
@@ -110,27 +110,29 @@ app.get('/QueryFileName', function (req, res) {
         });
     }
 });
+//Query for Past visualization and display on visualprogger.html
 app.get('/VizQuery', function (req, res) {
-    var timestamp = moment().subtract(5, "second").format('YYYY-MM-DD HH:mm:ss');
-
+    var x = req.query.path;
+    var timestamp = moment(x).subtract(60, "second").format('YYYY-MM-DD HH:mm:ss');
+    //querys for file opened and past 1 minute of the query
+    //file open log doesn't always sent every second so querying between 1 minute interval will get more result.
     db.query({
-        query: 'FOR d IN live FILTER d.typeName == "PSCT_FILE_OPEN"  d.timestamp > @time RETURN d',
+        query: 'FOR d IN live FILTER d.typeName == "PSCT_FILE_OPEN" and d.timestamp > @time and d.timestamp < @originaltime RETURN d',
         bindVars: {
+            originaltime: x,
             time: timestamp
         }
     }).then(
         cursor => cursor.all()
     ).then(
         result => {
-          
+            console.log(result.length);
             res.send(result);
         },
         err => console.log('Failed to execute query:', err)
     );
 
 });
-
-
 
 //Display 7 days chart of daily logs received
 app.get('/ChartDataQuery', function (req, res) {
@@ -163,8 +165,6 @@ app.get('/ChartDataQuery', function (req, res) {
 //socket io on connection return first few lines defined in db
 io.on('connection', (socket) => {
     console.log("New Client Connected: " + socket.id);
-
-
     socket.on('IndexPage', () => {
         var start = new Date();
         var timestamp = moment().subtract(1, "minute").format('YYYY-MM-DD HH:mm:ss');
@@ -180,7 +180,7 @@ io.on('connection', (socket) => {
             })
         })
 
-        //Query for Total Logs in ArangoDB
+        //Query for Total Logs in Card Header in Index.html
         db.query(
             'RETURN LENGTH(live)'
         ).then(function (cursor) {
@@ -192,7 +192,7 @@ io.on('connection', (socket) => {
             socket.emit("TotalLogs", cursor._result);
         });
 
-        //SkipList Indexing query speed improved
+        //SkipList Indexing. Improved Speed of query
         //Query for Logs Per Minute in Card Header in Index.html
         db.query({
             query: 'RETURN LENGTH(for d in live filter d.timestamp > @time return d)',
@@ -213,7 +213,7 @@ io.on('connection', (socket) => {
     });
 
     socket.on('get', () => {
-
+        //Redis method to retreive File Directory sent by Progger - Tony app
         /*
         redisClient.llen(dbName, (err, llen) => {
             redisClient.lrange("dirList", 0, llen, (err, result) => {
@@ -223,7 +223,7 @@ io.on('connection', (socket) => {
         });*/
 
         //Redis is key-value DB, not able to query specific keys to filter unless you store them in hashes.
-        //Can only query everything and display. unable to filter at redis side
+        //Can only query everything and display. unable to filter at redis side(Based on my understanding)
         redisClient.llen(dbName, (err, llen) => {
             //if size of dbBuffer is lesser than length(1000)
             if (llen < length) {
@@ -252,7 +252,7 @@ io.on('connection', (socket) => {
     });
 
 
-
+    //FTP Service Methods -----------------------------------------
     socket.on('closeconnection', function (msg) {
 
         ftp.destroy();
@@ -285,15 +285,10 @@ function jsonArray(list) {
     return temp;
 }
 
-function bytesToSize(bytes) {
-    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
-    if (bytes === 0) return 'n/a'
-    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)), 10)
-    if (i === 0) return `${bytes} ${sizes[i]}`
-    return `${(bytes / (1024 ** i)).toFixed(1)} ${sizes[i]}`
-}
 
-//FTP Service Methods
+
+//FTP Service Methods ------------------------------------
+//Permission is commented out because Windows doesn't have Permission option displayed in FTP. This only works with Linux
 app.get('/files', function (req, res) {
 
     var currentDir = dir;
@@ -368,8 +363,8 @@ app.get("/MkDir", function (req, res) {
                     testData.push({
                         Name: lists.name,
                         IsDirectory: true,
-                        Path: path.join(e[0], lists.name),
-                        permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
+                        Path: path.join(e[0], lists.name)
+                        //,                        permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
                     });
                 } else {
                     var ext = path.extname(lists.name);
@@ -385,8 +380,8 @@ app.get("/MkDir", function (req, res) {
                         Ext: ext,
                         IsDirectory: false,
                         Path: path.join(e[0], lists.name),
-                        Size: bytesToSize(lists.size),
-                        permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
+                        Size: bytesToSize(lists.size)
+                        // ,                    permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
                     });
                 }
 
@@ -405,7 +400,6 @@ app.get("/MkDir", function (req, res) {
 
 
 });
-
 app.get("/rmDir", function (req, res) {
     var query = req.query.path || '';
 
@@ -428,8 +422,8 @@ app.get("/rmDir", function (req, res) {
                     testData.push({
                         Name: lists.name,
                         IsDirectory: true,
-                        Path: path.join(updatedPath, lists.name),
-                        permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
+                        Path: path.join(updatedPath, lists.name)
+                        //,                        permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
                     });
                 } else {
                     var ext = path.extname(lists.name);
@@ -445,8 +439,9 @@ app.get("/rmDir", function (req, res) {
                         Ext: ext,
                         IsDirectory: false,
                         Path: path.join(updatedPath, lists.name),
-                        Size: bytesToSize(lists.size),
-                        permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
+                        Size: bytesToSize(lists.size)
+
+                        //,                        permission: "User: " + lists.rights.user + " | Group: " + lists.rights.group + " | Other: " + lists.rights.other
                     });
                 }
 
@@ -464,6 +459,13 @@ app.get("/rmDir", function (req, res) {
 
 });
 
+function bytesToSize(bytes) {
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']
+    if (bytes === 0) return 'n/a'
+    const i = parseInt(Math.floor(Math.log(bytes) / Math.log(1024)), 10)
+    if (i === 0) return `${bytes} ${sizes[i]}`
+    return `${(bytes / (1024 ** i)).toFixed(1)} ${sizes[i]}`
+}
 const argv = require('yargs')
     .usage('Usage: $0 <command> [options]')
     .command('$0', 'Browse file system.')
